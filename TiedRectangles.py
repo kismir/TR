@@ -70,8 +70,8 @@ class MyWidget(QtWidgets.QWidget):
             self.screen_h = scr_geom_params.height()
             self.screen_w = scr_geom_params.width()
         except:
-            self.screen_h = 1920
-            self.screen_w = 1080
+            self.screen_h = 1080
+            self.screen_w = 1920
         self.setGeometry(self.screen_w//6,self.screen_h//6,4*self.screen_w//6,4*self.screen_h//6)
         self.setWindowTitle('Tied Rectangles')
         self.selection_mode = 0
