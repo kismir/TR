@@ -1,6 +1,7 @@
+
 import sys
 from PyQt5 import QtWidgets, QtCore 
-from PyQt5.QtGui import QPainter, QColor
+from PyQt5.QtGui import QPainter, QColor, QPen
 import random
 from math import hypot
 
@@ -99,13 +100,42 @@ class MyWidget(QtWidgets.QWidget):
         qp = QPainter()
         qp.begin(self)
         for rect in self.group_handler.rectangles:        
-            qp.setBrush(QColor(*rect.color))   
+            qp.setBrush(QColor(*rect.color))
+            if rect.group != None:
+                pen = QPen()
+                pen.setBrush(QColor(*rect.group.group_color))
+                pen.setWidth(rect.border_width)
+                qp.setPen(pen)
+            else:
+                pen = QPen()
+                pen.setBrush(QColor('black'))
+                pen.setWidth(1)
+                qp.setPen(pen)
             qp.drawRect(rect.x, rect.y, rect.w, rect.h) 
         lines = self.get_lines_to_paint(self.group_handler)
         for line in lines:
             a,b = line.rectangles[0], line.rectangles[1]
-            qp.drawLine(a.x+a.w/2, a.y+a.h/2, b.x+b.w/2, b.y+b.h/2)     
-        qp.end()
+            pen = QPen() 
+            pen.setWidth(line.border_width)
+            pen.setBrush(QColor(*line.group.group_color))
+            qp.setPen(pen)
+            qp.drawLine(a.x+a.w/2, a.y+a.h/2, b.x+b.w/2, b.y+b.h/2)
+        for sel_unite in self.group_handler.selected_rectangles_to_unite:
+            pen = QPen() 
+            pen.setWidth(1)
+            pen.setBrush(QColor('black'))
+            qp.setPen(pen)
+            qp.setBrush(QColor('green'))
+            qp.drawEllipse(sel_unite.x, sel_unite.y, 15, 15)
+        for sel_untie in self.group_handler.selected_rectangles_to_untie:
+            pen = QPen() 
+            pen.setWidth(1)
+            pen.setBrush(QColor('black'))
+            qp.setPen(pen)
+            qp.setBrush(QColor('red'))
+            qp.drawEllipse(sel_untie.x+15, sel_untie.y, 15, 15)     
+        qp.end()   
+
 
     def mouseDoubleClickEvent(self, event):
         if self.selection_mode == 0:
@@ -183,7 +213,7 @@ class Groups():
                     #merge two groups (a.group,b.group) into a.group and clear b.group
                     a.group.rectangles = {**a.group.rectangles,**b.group.rectangles}
                     a.group.lines = {**a.group.lines,**b.group.lines}
-                    # remember b.group, cause b.group will be change to a.group
+                    # remember b.group, cause b.group will be changed to a.group
                     bgroup = b.group 
                     # reassign group markers for rectangles and lines b -> a
                     for r in b.group.rectangles:
@@ -205,10 +235,10 @@ class Groups():
                 self.groups.append(group)
  
     def a_b_has_far_connection(self,group,con_line,a,b):
-        # breadth first search fast stop optimization on trees far connection check
-        # Scheme of graph variant, we are worry about:   a--x--b   Scheme of cat: |\__/,|   (`\
-        #                                                |     |                _.|o o  |_   ) )
-        #                                                -->?<--               -<(<----<(<------                                                                                                 
+        # breadth first search fast stop optimization on trees. far connection check
+        # Scheme of graph case, we are worried about:   a--x--b   Scheme of cat: |\__/,|   (`\
+        #                                               |     |                _.|o o  |_   ) )
+        #                                               -->?<--               -<(<----<(<------                                                                                                 
         aqueue = []
         bqueue = []
         aqueue.append(a)
@@ -355,12 +385,13 @@ class TiedGroup():
     def __init__(self):
         self.rectangles = dict()
         self.lines = dict()
+        self.group_color = (random.randint(10,245), random.randint(10,245), random.randint(10,245))
  
     def tie_2_rectangles(self,a,b):
         a.group = self
         b.group = self
         line = Line(a,b)
-        line.group = self
+        line.group = self 
         self.lines[line] = (a,b)
         if a not in self.rectangles:
             self.rectangles[a] = [line,]
@@ -385,11 +416,13 @@ class Rectangle():
         self.x = event.pos().x()-self.w/2
         self.y = event.pos().y()-self.h/2
         self.color = (random.randint(10,245), random.randint(10,245), random.randint(10,245))
+        self.border_width = 4
 
 class Line():
     def __init__(self,a,b):
         self.group = None
         self.rectangles = [a,b]
+        self.border_width = 2
 
 if __name__ == '__main__':
     app = QtWidgets.QApplication(sys.argv)
