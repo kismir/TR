@@ -47,6 +47,7 @@ class CalcUtils():
                         dy = abs(irect.y-y)
                         if dx<(irect.w) and dy<(irect.h):
                             flag = 0
+                            break
                     if flag == 1:
                         dst = hypot(x-dragged_rect.x, y-dragged_rect.y)
                         if dst<=closest_coords[2]:
@@ -58,6 +59,7 @@ class CalcUtils():
                                     dy = abs(rect.y-y)
                                     if dx<(rect.w) and dy<(rect.h):
                                         overlap_flag = 1
+                                        break
                             if overlap_flag == 0:
                                 closest_coords = [x,y,dst]
             dragged_rect.x = closest_coords[0]
