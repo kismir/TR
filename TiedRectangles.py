@@ -45,13 +45,12 @@ class CalcUtils():
                     if dst<=closest_coords[2]:
                         # check if in new position does not overlap other rects
                         overlap_flag = 0
-                        for rect in rectangles:
-                            if rect != dragged_rect:
-                                dx = abs(rect.x-x)
-                                dy = abs(rect.y-y)
-                                if dx<(rect.w) and dy<(rect.h):
-                                    overlap_flag = 1
-                                    break
+                        for rect in intersected_rectangles:
+                            dx = abs(rect.x-x)
+                            dy = abs(rect.y-y)
+                            if dx<(rect.w) and dy<(rect.h):
+                                overlap_flag = 1
+                                break
                         if overlap_flag == 0:
                             closest_coords = [x,y,dst]
             dragged_rect.x = closest_coords[0]
@@ -198,35 +197,44 @@ class Groups():
         self.selected_rectangles_to_unite = []
         self.selected_rectangles_to_untie = []
         self.rectangles = []
- 
+
+    def check_a_b_line_already_exist(self,a,b):
+        for group in self.groups:
+            for line in group.lines:
+                if (a in line.rectangles) and (b in line.rectangles):
+                    print('True')
+                    return True
+        return False
+
     def create_group(self):
         a,b = self.selected_rectangles_to_unite
         if a!=b:
-            if (a.group != None) and (b.group != None):
-                if a.group != b.group: # rectangles are in different groups
-                    #merge two groups (a.group,b.group) into a.group and clear b.group
-                    a.group.rectangles = {**a.group.rectangles,**b.group.rectangles}
-                    a.group.lines = {**a.group.lines,**b.group.lines}
-                    # remember b.group, cause b.group will be changed to a.group
-                    bgroup = b.group 
-                    # reassign group markers for rectangles and lines b -> a
-                    for r in b.group.rectangles:
-                        r.group = a.group
-                    for l in b.group.lines:
-                        l.group = a.group
+            if not self.check_a_b_line_already_exist(a,b):
+                if (a.group != None) and (b.group != None):
+                    if a.group != b.group: # rectangles are in different groups
+                        #merge two groups (a.group,b.group) into a.group and clear b.group
+                        a.group.rectangles = {**a.group.rectangles,**b.group.rectangles}
+                        a.group.lines = {**a.group.lines,**b.group.lines}
+                        # remember b.group, cause b.group will be changed to a.group
+                        bgroup = b.group 
+                        # reassign group markers for rectangles and lines b -> a
+                        for r in b.group.rectangles:
+                            r.group = a.group
+                        for l in b.group.lines:
+                            l.group = a.group
+                        a.group.tie_2_rectangles(a,b)
+                        # remove group by reference variable bgroup
+                        self.groups.remove(bgroup)
+                    else: # rectangles are in the same group
+                        a.group.tie_2_rectangles(a,b)
+                elif (a.group != None) and (b.group == None):
                     a.group.tie_2_rectangles(a,b)
-                    # remove group by reference variable bgroup
-                    self.groups.remove(bgroup)
-                else: # rectangles are in the same group
-                    a.group.tie_2_rectangles(a,b)
-            elif (a.group != None) and (b.group == None):
-                a.group.tie_2_rectangles(a,b)
-            elif (a.group == None) and (b.group != None):
-                b.group.tie_2_rectangles(b,a)
-            else:
-                group = TiedGroup()
-                group.tie_2_rectangles(a,b)
-                self.groups.append(group)
+                elif (a.group == None) and (b.group != None):
+                    b.group.tie_2_rectangles(b,a)
+                else:
+                    group = TiedGroup()
+                    group.tie_2_rectangles(a,b)
+                    self.groups.append(group)
  
     def a_b_has_far_connection(self,group,con_line,a,b):
         # breadth first search fast stop optimization on trees. far connection check
