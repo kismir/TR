@@ -1,4 +1,3 @@
-
 import sys
 from PyQt5 import QtWidgets, QtCore 
 from PyQt5.QtGui import QPainter, QColor, QPen
@@ -202,7 +201,6 @@ class Groups():
         for group in self.groups:
             for line in group.lines:
                 if (a in line.rectangles) and (b in line.rectangles):
-                    print('True')
                     return True
         return False
 
