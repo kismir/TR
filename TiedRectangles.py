@@ -41,27 +41,19 @@ class CalcUtils():
             closest_coords = [cx[0], cy[0], float('inf')] 
             for x in cx:
                 for y in cy:
-                    flag = 1
-                    for irect in intersected_rectangles:
-                        dx = abs(irect.x-x)
-                        dy = abs(irect.y-y)
-                        if dx<(irect.w) and dy<(irect.h):
-                            flag = 0
-                            break
-                    if flag == 1:
-                        dst = hypot(x-dragged_rect.x, y-dragged_rect.y)
-                        if dst<=closest_coords[2]:
-                            # check if in new position does not overlap other rects
-                            overlap_flag = 0
-                            for rect in rectangles:
-                                if rect != dragged_rect:
-                                    dx = abs(rect.x-x)
-                                    dy = abs(rect.y-y)
-                                    if dx<(rect.w) and dy<(rect.h):
-                                        overlap_flag = 1
-                                        break
-                            if overlap_flag == 0:
-                                closest_coords = [x,y,dst]
+                    dst = hypot(x-dragged_rect.x, y-dragged_rect.y)
+                    if dst<=closest_coords[2]:
+                        # check if in new position does not overlap other rects
+                        overlap_flag = 0
+                        for rect in rectangles:
+                            if rect != dragged_rect:
+                                dx = abs(rect.x-x)
+                                dy = abs(rect.y-y)
+                                if dx<(rect.w) and dy<(rect.h):
+                                    overlap_flag = 1
+                                    break
+                        if overlap_flag == 0:
+                            closest_coords = [x,y,dst]
             dragged_rect.x = closest_coords[0]
             dragged_rect.y = closest_coords[1]
 
