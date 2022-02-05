@@ -87,43 +87,34 @@ class MyWidget(QtWidgets.QWidget):
                 lines.append(line)
         return lines
 
+    def set_pen(self, pen, qp, brdrw, color):
+        pen.setBrush(color)
+        pen.setWidth(brdrw)
+        qp.setPen(pen)
+
     def paintEvent(self, event):
         # here we paint all geometry
         qp = QPainter()
+        pen = QPen()
         qp.begin(self)
         for rect in self.group_handler.rectangles:        
             qp.setBrush(QColor(*rect.color))
             if rect.group != None:
-                pen = QPen()
-                pen.setBrush(QColor(*rect.group.group_color))
-                pen.setWidth(rect.border_width)
-                qp.setPen(pen)
+                self.set_pen(pen, qp, rect.border_width, QColor(*rect.group.group_color))
             else:
-                pen = QPen()
-                pen.setBrush(QColor('black'))
-                pen.setWidth(1)
-                qp.setPen(pen)
+                self.set_pen(pen, qp, 1, QColor('black'))
             qp.drawRect(rect.x, rect.y, rect.w, rect.h) 
         lines = self.get_lines_to_paint(self.group_handler)
         for line in lines:
             a,b = line.rectangles[0], line.rectangles[1]
-            pen = QPen() 
-            pen.setWidth(line.border_width)
-            pen.setBrush(QColor(*line.group.group_color))
-            qp.setPen(pen)
+            self.set_pen(pen, qp, line.border_width, QColor(*line.group.group_color))
             qp.drawLine(a.x+a.w/2, a.y+a.h/2, b.x+b.w/2, b.y+b.h/2)
         for sel_unite in self.group_handler.selected_rectangles_to_unite:
-            pen = QPen() 
-            pen.setWidth(1)
-            pen.setBrush(QColor('black'))
-            qp.setPen(pen)
+            self.set_pen(pen, qp, 1, QColor('black'))
             qp.setBrush(QColor('green'))
             qp.drawEllipse(sel_unite.x, sel_unite.y, 15, 15)
         for sel_untie in self.group_handler.selected_rectangles_to_untie:
-            pen = QPen() 
-            pen.setWidth(1)
-            pen.setBrush(QColor('black'))
-            qp.setPen(pen)
+            self.set_pen(pen, qp, 1, QColor('black'))
             qp.setBrush(QColor('red'))
             qp.drawEllipse(sel_untie.x+15, sel_untie.y, 15, 15)     
         qp.end()   
