@@ -7,7 +7,9 @@ from math import hypot
 class CalcUtils():
     '''Functions to calculate intersection of rectangles in creation mode'''
     def __init__(self):
-        pass
+        self.overlap_buffer = set()
+        self.buffer_size = 5000
+        self.currently_dragged_rect = None
 
     def get_rectangle_we_clicked_on(self, rectangles, event):
         clicked_rectangle = None
@@ -29,6 +31,12 @@ class CalcUtils():
         return flag
 
     def check_rect_intersections_while_dragging_define_free_pos(self, rectangles, dragged_rect):
+        # check if we can use fixed size overlap buffer for this dragged 
+        # rectangle from previous iterations
+        if self.currently_dragged_rect != dragged_rect:
+            self.overlap_buffer = set()
+            self.currently_dragged_rect = dragged_rect
+        # list of rectangles, dragged rectangle excluded
         intersected_rectangles = [rect for rect in rectangles if rect != dragged_rect]
         if len(intersected_rectangles)!=0:
             # represents all possible coordinate combinations in 2 lists: cx, cy
@@ -40,18 +48,22 @@ class CalcUtils():
             closest_coords = [cx[0], cy[0], float('inf')] 
             for x in cx:
                 for y in cy:
-                    dst = hypot(x-dragged_rect.x, y-dragged_rect.y)
-                    if dst<=closest_coords[2]:
-                        # check if in new position does not overlap other rects
-                        overlap_flag = 0
-                        for rect in intersected_rectangles:
-                            dx = abs(rect.x-x)
-                            dy = abs(rect.y-y)
-                            if dx<(rect.w) and dy<(rect.h):
-                                overlap_flag = 1
-                                break
-                        if overlap_flag == 0:
-                            closest_coords = [x,y,dst]
+                    if (x,y) not in self.overlap_buffer:
+                        dst = hypot(x-dragged_rect.x, y-dragged_rect.y)
+                        if dst<=closest_coords[2]:
+                            # check if in new position does not overlap other rects
+                            overlap_flag = 0
+                            for rect in intersected_rectangles:
+                                dx = abs(rect.x-x)
+                                dy = abs(rect.y-y)
+                                if dx<(rect.w) and dy<(rect.h):
+                                    overlap_flag = 1
+                                    # make note in buffer, that we've checked this position
+                                    if not (x == dragged_rect.x or y == dragged_rect.y) and len(self.overlap_buffer)<self.buffer_size:
+                                        self.overlap_buffer.add((x,y))
+                                    break
+                            if overlap_flag == 0:
+                                closest_coords = [x,y,dst]
             dragged_rect.x = closest_coords[0]
             dragged_rect.y = closest_coords[1]
 
@@ -77,6 +89,10 @@ class MyWidget(QtWidgets.QWidget):
         self.label = QtWidgets.QLabel(self.label_text, self)
         self.label.setFixedSize(700,150)
         self.label.move(50, 50)
+        # self.label_text_c = "Tap 'm' to move all rectangles."
+        # self.label_c = QtWidgets.QLabel(self.label_text_c, self)
+        # self.label_c.setFixedSize(700,150)
+        # self.label_c.move(50, 850)
         self.show()
 
     def get_lines_to_paint(self, gh):
